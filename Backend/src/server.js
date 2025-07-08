@@ -7,11 +7,19 @@ app.use(express.json());
 const dbconnect  = require("./DB/db.js");
 dbconnect();
 app.use(cookie());
+app.use(express.urlencoded({ extended: true }));
+
 const authroute = require("./routes/auth.route.js");
 app.use("/api/auth",authroute);
 
+// this api endpoint made for blood request add in database 
 const bloodrequest = require("./routes/blood-request.route.js");
-app.use("/api/blood" ,bloodrequest);
+app.use("/api" ,bloodrequest);
+
+// this api endoint made for finding blood donars in database
+const blooddonors = require("./routes/blooddonor.route.js");
+app.use("/api/blood", blooddonors);
+
 const port = process.env.PORT
 app.listen(port, ()=>{
     console.log(`server is running on port ${port}`);

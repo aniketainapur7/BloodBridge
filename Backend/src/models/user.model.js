@@ -16,7 +16,7 @@ const userSchema = new mongoose.Schema({
   },
   bloodType: {
     type: String,
-    enum: ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"],
+    enum: ["AP", "AN", "BP", "BN", "ABP", "ABN", "OP", "ON"],
   },
   role: {
     type: String,
@@ -33,11 +33,9 @@ const userSchema = new mongoose.Schema({
       type: [Number], // [longitude, latitude]
     },
   },
-  isAvailable: {
-    type: Boolean,
-    default: false,
-  },
-}, {
+},
+ 
+ {
   timestamps: true,
 });
 
