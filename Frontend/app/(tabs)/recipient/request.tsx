@@ -89,13 +89,14 @@ const styles = StyleSheet.create({
   title: {
     textAlign: 'center',
     marginBottom: 10,
+    color: '#595959',
   },
   label: {
     fontWeight: '600',
     marginBottom: 4,
   },
   input: {
-    height: 48,
+    height: 54,
     borderColor: '#ccc',
     borderWidth: 1,
     borderRadius: 8,
@@ -111,7 +112,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   picker: {
-    height: Platform.OS === 'ios' ? 180 : 50,
+    height: Platform.OS === 'ios' ? 180 : 54,
     backgroundColor: '#fff',
   },
 });
