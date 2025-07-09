@@ -1,35 +1,92 @@
-import React, { useState } from 'react';
-import { View, TextInput, Button, StyleSheet, Alert, Platform, ScrollView, Text } from 'react-native';
-import { Picker } from '@react-native-picker/picker';
-import { ThemedView } from '@/components/ThemedView';
-import { ThemedText } from '@/components/ThemedText';
-import { useRouter } from 'expo-router';
+import React, { useState } from "react";
+import {
+  View,
+  TextInput,
+  Button,
+  StyleSheet,
+  Alert,
+  Platform,
+  ScrollView,
+  Text,
+} from "react-native";
+import { Picker } from "@react-native-picker/picker";
+import * as Location from "expo-location";
+import axios from "axios";
+import { ThemedView } from "@/components/ThemedView";
+import { ThemedText } from "@/components/ThemedText";
+import { useRouter } from "expo-router";
 
 const BloodRequestScreen = () => {
-  const [bloodType, setBloodType] = useState('');
-  const [urgency, setUrgency] = useState('');
-  const [hospitalLocation, setHospitalLocation] = useState('');
+  const [bloodType, setBloodType] = useState("");
+  const [urgency, setUrgency] = useState("");
+  const [hospitalLocation, setHospitalLocation] = useState("");
+  const [locationCoords, setLocationCoords] = useState(null); // Save lat/lng
   const router = useRouter();
 
-  const handleSubmit = () => {
-    if (!bloodType || !urgency || !hospitalLocation) {
-      Alert.alert('Error', 'All fields are required!');
+  const handleSubmit = async () => {
+    if (!bloodType || !urgency || !hospitalLocation || !locationCoords) {
+      Alert.alert("Error", "All fields are required!");
       return;
     }
 
-    const requestId = `REQ-${Math.floor(100000 + Math.random() * 900000)}`;
-    Alert.alert('Success', `Request ID: ${requestId}\nDonors will be notified.`);
-    router.replace('/bloodRequest/donor_matching');
+    try {
+      const response = await axios.post("http://192.168.159.86:3001/api/blood-request", {
+        bloodType,
+        urgency,
+        hospitalLocation: {
+          lat: locationCoords.latitude,
+          lng: locationCoords.longitude,
+        },
+      });
+
+      Alert.alert("Success", "Blood request submitted successfully.");
+      router.replace("/bloodRequest/donor_matching");
+    } catch (error) {
+      console.error("API error:", error);
+      Alert.alert("Error", "Failed to submit request.");
+    }
+  };
+
+  const getCurrentLocation = async () => {
+    try {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== "granted") {
+        Alert.alert("Permission Denied", "Location permission is required.");
+        return;
+      }
+
+      const location = await Location.getCurrentPositionAsync({});
+      const { latitude, longitude } = location.coords;
+      setLocationCoords({ latitude, longitude }); // Store coordinates
+
+      const [address] = await Location.reverseGeocodeAsync({ latitude, longitude });
+
+      if (address) {
+        const formattedAddress = `${address.name || ""} ${address.street || ""}, ${address.city || ""}, ${address.region || ""} ${address.postalCode || ""}`;
+        setHospitalLocation(formattedAddress.trim());
+      } else {
+        Alert.alert("Address not found");
+      }
+    } catch (error) {
+      console.error("Location error:", error);
+      Alert.alert("Error", "Failed to fetch location.");
+    }
   };
 
   return (
     <ScrollView contentContainerStyle={styles.scrollContainer}>
       <ThemedView style={styles.formContainer}>
-        <ThemedText type="title" style={styles.title}>Blood Request Form</ThemedText>
+        <ThemedText type="title" style={styles.title}>
+          Blood Request Form
+        </ThemedText>
 
         <Text style={styles.label}>Blood Group</Text>
         <View style={styles.pickerContainer}>
-          <Picker selectedValue={bloodType} onValueChange={setBloodType} style={styles.picker}>
+          <Picker
+            selectedValue={bloodType}
+            onValueChange={setBloodType}
+            style={styles.picker}
+          >
             <Picker.Item label="Select Blood Group" value="" />
             <Picker.Item label="A+" value="A+" />
             <Picker.Item label="A-" value="A-" />
@@ -44,7 +101,11 @@ const BloodRequestScreen = () => {
 
         <Text style={styles.label}>Urgency</Text>
         <View style={styles.pickerContainer}>
-          <Picker selectedValue={urgency} onValueChange={setUrgency} style={styles.picker}>
+          <Picker
+            selectedValue={urgency}
+            onValueChange={setUrgency}
+            style={styles.picker}
+          >
             <Picker.Item label="Select Urgency" value="" />
             <Picker.Item label="High" value="High" />
             <Picker.Item label="Medium" value="Medium" />
@@ -53,12 +114,15 @@ const BloodRequestScreen = () => {
         </View>
 
         <Text style={styles.label}>Hospital Location</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Enter Hospital Location"
-          value={hospitalLocation}
-          onChangeText={setHospitalLocation}
-        />
+        <View style={styles.locationRow}>
+          <TextInput
+            style={[styles.input, { flex: 1 }]}
+            placeholder="Enter or Detect Location"
+            value={hospitalLocation}
+            onChangeText={setHospitalLocation}
+          />
+          <Button title="📍" onPress={getCurrentLocation} />
+        </View>
 
         <Button title="Submit Request" onPress={handleSubmit} />
       </ThemedView>
@@ -71,48 +135,54 @@ export default BloodRequestScreen;
 const styles = StyleSheet.create({
   scrollContainer: {
     flexGrow: 1,
-    justifyContent: 'center',
+    justifyContent: "center",
     padding: 20,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: "#f8f9fa",
   },
   formContainer: {
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     borderRadius: 10,
     padding: 20,
     gap: 12,
     elevation: 3,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOpacity: 0.1,
     shadowRadius: 4,
     shadowOffset: { width: 0, height: 2 },
   },
   title: {
-    textAlign: 'center',
+    textAlign: "center",
     marginBottom: 10,
-    color: '#595959',
+    color: "#595959",
   },
   label: {
-    fontWeight: '600',
+    fontWeight: "600",
     marginBottom: 4,
   },
   input: {
     height: 54,
-    borderColor: '#ccc',
+    borderColor: "#ccc",
     borderWidth: 1,
     borderRadius: 8,
     paddingHorizontal: 12,
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     marginBottom: 10,
   },
   pickerContainer: {
     borderWidth: 1,
-    borderColor: '#ccc',
+    borderColor: "#ccc",
     borderRadius: 8,
-    overflow: 'hidden',
+    overflow: "hidden",
     marginBottom: 10,
   },
   picker: {
-    height: Platform.OS === 'ios' ? 180 : 54,
-    backgroundColor: '#fff',
+    height: Platform.OS === "ios" ? 180 : 54,
+    backgroundColor: "#fff",
+  },
+  locationRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 10,
+    gap: 10,
   },
 });

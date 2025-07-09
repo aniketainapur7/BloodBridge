@@ -16,7 +16,7 @@ import axios from 'axios';
 const { width } = Dimensions.get('window');
 
 // ✅ Replace with your Mac IP used in login
-const API_BASE_URL = 'http://10.169.156.28:3001';
+const API_BASE_URL = 'http://192.168.159.86:3001';
 
 export default function RecipientPage() {
   const router = useRouter();

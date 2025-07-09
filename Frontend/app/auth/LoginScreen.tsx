@@ -5,7 +5,7 @@ import { useRouter } from 'expo-router';
 import { useAuth } from '../../utils/authContext';
 import * as SecureStore from 'expo-secure-store';
 
-const API_BASE_URL = 'http://10.169.156.28:3001/api/auth'; // use 192.168.x.x:3001 on real device
+const API_BASE_URL = 'http://192.168.159.86:3001/api/auth'; // use 192.168.x.x:3001 on real device
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
