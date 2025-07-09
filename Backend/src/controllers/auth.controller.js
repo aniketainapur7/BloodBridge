@@ -5,8 +5,8 @@ const generatejwt = require("../utils/generatetoken.js");
 
 const signup = async(req,res)=>{
    try {
-    const { fullName, email, password, role, longitude, latitude } = req.body;
-     if(!fullName || !email || !password || !role || !longitude || !latitude){
+    const { fullName, email, password, role, longitude, latitude , phonenumber} = req.body;
+     if(!fullName || !email || !password || !role || !longitude || !latitude || !phonenumber){
         return res.status(400).json({message : "allfields are mandaotary"});
      }
      if(password.length < 6){
@@ -29,6 +29,7 @@ const signup = async(req,res)=>{
         type: "Point",
         coordinates: [parseFloat(longitude), parseFloat(latitude)]
       },
+      phonenumber : phonenumber
      })
  
      if(newuser){
@@ -40,7 +41,8 @@ const signup = async(req,res)=>{
             id  : newuser._id,
             fullName : newuser.fullName,
             email : newuser.email,
-            role : newuser.role
+            role : newuser.role,
+            phonenumber : phonenumber
          })
      }
      else{
