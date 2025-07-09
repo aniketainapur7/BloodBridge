@@ -3,10 +3,11 @@ const User = require("../models/user.model.js");
 
 const verifyjwt = async (req, res, next) => {
   try {
-    const authHeader = req.headers.authorization;
+    const authHeader = req.headers.authorization ;
+    // console.log(authHeader);
 
-    
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      
       return res.status(401).json({ message: "Unauthorized - No Token Provided" });
     }
     const token = authHeader.split(" ")[1];
@@ -18,8 +19,6 @@ const verifyjwt = async (req, res, next) => {
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
-
-    // Attach user to request
     req.user = user;
 
     next();

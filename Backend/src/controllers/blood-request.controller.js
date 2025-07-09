@@ -29,4 +29,37 @@ const BloodRequestSubmission = async (req, res) => {
   }
 };
 
-module.exports = BloodRequestSubmission;
+const getIncomingRequests = async (req, res) => {
+  try {
+    const requests = await BloodRequest.find()
+      .sort({ createdAt: -1 })
+      .limit(20)
+      .populate("requestedBy", "fullName");
+   
+      // const user = await findBy(req.user._id)
+
+    const response = requests.map((req) => ({
+      id: req._id,
+      name: req.user?.fullName || "Unknown",
+      bloodType: req.bloodType,
+      urgency: req.urgency,
+      hospitalLocation: req.hospitalLocation,
+      createdAt: req.createdAt,
+    }));
+
+    res.status(200).json(response);
+  } catch (err) {
+    console.error("Error fetching blood requests:", err);
+    res.status(500).json({ message: "Server error while fetching requests" });
+  }
+};
+
+
+
+
+
+module.exports = {
+  BloodRequestSubmission,getIncomingRequests
+};
+
+

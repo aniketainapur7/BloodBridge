@@ -8,8 +8,7 @@ const donorRespondController = async (req, res) => {
     if (!donorId || !requestId || !["accepted", "declined"].includes(status)) {
       return res.status(400).json({ error: "Invalid input" });
     }
-
-    // Fetch the request
+    
     const request = await BloodRequest.findById(requestId).populate("requestedBy");
 
     if (!request) {
