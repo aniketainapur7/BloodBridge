@@ -1,24 +1,18 @@
-import React from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  FlatList,
+  TouchableOpacity,
+  ActivityIndicator,
+  Alert,
+  Linking,
+} from 'react-native';
+import axios from 'axios';
 
-const requests = [
-  {
-    id: '1',
-    name: 'User A',
-    bloodType: 'A+',
-    urgency: 'High',
-    hospitalLocation: { coordinates: [77.1025, 28.7041] }, // Delhi
-    createdAt: '2025-07-08T12:00:00Z',
-  },
-  {
-    id: '2',
-    name: 'User B',
-    bloodType: 'B-',
-    urgency: 'Medium',
-    hospitalLocation: { coordinates: [77.5946, 12.9716] }, // Bangalore
-    createdAt: '2025-07-09T08:30:00Z',
-  },
-];
+
+const API_URL = 'http://192.168.159.86:3001/api/incoming';
 
 const formatDate = (iso: string) => {
   const date = new Date(iso);
@@ -31,13 +25,56 @@ const formatDate = (iso: string) => {
 };
 
 export default function IncomingRequestPage() {
+  const [requests, setRequests] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchRequests = async () => {
+      try {
+        const res = await axios.get(API_URL);
+        setRequests(res.data);
+      } catch (err) {
+        console.error("Failed to fetch requests:", err);
+        Alert.alert("Error", "Unable to fetch requests.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchRequests();
+  }, []);
+
+  const handleAccept = (item: any) => {
+    const coords = item?.hospitalLocation?.coordinates || [];
+    if (coords.length === 2) {
+      const [lng, lat] = coords;
+      const url = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
+      Linking.openURL(url);
+    } else {
+      Alert.alert("Invalid location", "Location coordinates not found.");
+    }
+  };
+
+  const handleDecline = (item: any) => {
+    Alert.alert("Declined", `You have declined the request from ${item.name}`);
+    // TODO: Add backend call to update request status if needed
+  };
+
+  if (loading) {
+    return (
+      <View style={styles.container}>
+        <ActivityIndicator size="large" color="#007bff" />
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Incoming Requests</Text>
 
       <FlatList
         data={requests}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item) => item._id || item.id || Math.random().toString()}
         contentContainerStyle={{ paddingBottom: 20 }}
         renderItem={({ item }) => (
           <View style={styles.card}>
@@ -46,16 +83,16 @@ export default function IncomingRequestPage() {
               <Text style={styles.info}>Blood Type: {item.bloodType}</Text>
               <Text style={styles.info}>Urgency: {item.urgency}</Text>
               <Text style={styles.info}>
-                Location: {item.hospitalLocation.coordinates.join(', ')}
+                Location: {item.hospitalLocation?.coordinates?.join(', ') || 'N/A'}
               </Text>
               <Text style={styles.date}>Requested: {formatDate(item.createdAt)}</Text>
             </View>
 
             <View style={styles.buttonGroup}>
-              <TouchableOpacity style={styles.acceptBtn} onPress={() => {}}>
+              <TouchableOpacity style={styles.acceptBtn} onPress={() => handleAccept(item)}>
                 <Text style={styles.btnText}>Accept</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.declineBtn} onPress={() => {}}>
+              <TouchableOpacity style={styles.declineBtn} onPress={() => handleDecline(item)}>
                 <Text style={styles.btnText}>Decline</Text>
               </TouchableOpacity>
             </View>
@@ -69,71 +106,68 @@ export default function IncomingRequestPage() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: '#f5f5f5',
+    paddingHorizontal: 16,
     paddingTop: 40,
-    paddingHorizontal: 20,
   },
   title: {
     fontSize: 22,
     fontWeight: 'bold',
+    marginBottom: 16,
     color: '#333',
-    marginBottom: 20,
-    textAlign: 'center',
   },
   card: {
     backgroundColor: '#fff',
     borderRadius: 12,
     padding: 16,
-    marginBottom: 12,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    elevation: 3,
+    marginBottom: 16,
+    elevation: 2,
     shadowColor: '#000',
-    shadowOpacity: 0.08,
-    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowOffset: { width: 0, height: 1 },
     shadowRadius: 4,
   },
   cardLeft: {
-    flex: 1,
-    paddingRight: 10,
+    marginBottom: 12,
   },
   name: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#007bff',
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#111',
     marginBottom: 4,
   },
   info: {
     fontSize: 14,
-    color: '#333',
+    color: '#555',
     marginBottom: 2,
   },
   date: {
     fontSize: 12,
-    color: '#555',
-    marginTop: 4,
+    color: '#888',
+    marginTop: 6,
   },
   buttonGroup: {
+    flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-end',
-    gap: 8,
   },
   acceptBtn: {
     backgroundColor: '#28a745',
-    paddingVertical: 6,
-    paddingHorizontal: 14,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
     borderRadius: 8,
+    flex: 1,
+    marginRight: 8,
   },
   declineBtn: {
     backgroundColor: '#dc3545',
-    paddingVertical: 6,
-    paddingHorizontal: 13,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
     borderRadius: 8,
+    flex: 1,
   },
   btnText: {
     color: '#fff',
-    fontSize: 14,
+    textAlign: 'center',
     fontWeight: '600',
   },
 });

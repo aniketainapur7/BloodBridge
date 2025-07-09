@@ -12,15 +12,18 @@ import {
 import { Picker } from "@react-native-picker/picker";
 import * as Location from "expo-location";
 import axios from "axios";
+import * as SecureStore from "expo-secure-store";
 import { ThemedView } from "@/components/ThemedView";
 import { ThemedText } from "@/components/ThemedText";
 import { useRouter } from "expo-router";
+
+const API_BASE_URL = "http://192.168.159.86:3001"; // ✅ Your backend IP
 
 const BloodRequestScreen = () => {
   const [bloodType, setBloodType] = useState("");
   const [urgency, setUrgency] = useState("");
   const [hospitalLocation, setHospitalLocation] = useState("");
-  const [locationCoords, setLocationCoords] = useState(null); // Save lat/lng
+  const [locationCoords, setLocationCoords] = useState(null);
   const router = useRouter();
 
   const handleSubmit = async () => {
@@ -30,19 +33,35 @@ const BloodRequestScreen = () => {
     }
 
     try {
-      const response = await axios.post("http://192.168.159.86:3001/api/blood-request", {
-        bloodType,
-        urgency,
-        hospitalLocation: {
-          lat: locationCoords.latitude,
-          lng: locationCoords.longitude,
+      const token = await SecureStore.getItemAsync("jwt");
+      if (!token) {
+        console.error("No JWT token found");
+        Alert.alert("Error", "You must be logged in to submit a request.");
+        return;
+      }
+
+      const response = await axios.post(
+        `${API_BASE_URL}/api/blood-request`,
+        {
+          bloodType,
+          urgency,
+          hospitalLocation: {
+            lat: locationCoords.latitude,
+            lng: locationCoords.longitude,
+          },
         },
-      });
+        {
+          headers: {
+            Authorization: `Bearer ${token}`, 
+            "Content-Type": "application/json",
+          },
+        }
+      );
 
       Alert.alert("Success", "Blood request submitted successfully.");
-      router.replace("/bloodRequest/donor_matching");
+      router.replace("./MatchingDonorsScreen");
     } catch (error) {
-      console.error("API error:", error);
+      console.error("API error:", error?.response?.data || error.message);
       Alert.alert("Error", "Failed to submit request.");
     }
   };
@@ -57,12 +76,15 @@ const BloodRequestScreen = () => {
 
       const location = await Location.getCurrentPositionAsync({});
       const { latitude, longitude } = location.coords;
-      setLocationCoords({ latitude, longitude }); // Store coordinates
+      setLocationCoords({ latitude, longitude });
 
-      const [address] = await Location.reverseGeocodeAsync({ latitude, longitude });
+      const [address] = await Location.reverseGeocodeAsync({
+        latitude,
+        longitude,
+      });
 
       if (address) {
-        const formattedAddress = `${address.name || ""} ${address.street || ""}, ${address.city || ""}, ${address.region || ""} ${address.postalCode || ""}`;
+        const formattedAddress = `${address?.name ?? ""} ${address?.street ?? ""}, ${address?.city ?? ""}, ${address?.region ?? ""} ${address?.postalCode ?? ""}`;
         setHospitalLocation(formattedAddress.trim());
       } else {
         Alert.alert("Address not found");
