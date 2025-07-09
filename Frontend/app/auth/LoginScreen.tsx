@@ -4,7 +4,7 @@ import axios from 'axios';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../../utils/authContext';
 
-const API_BASE_URL = 'http://localhost:3001/api/auth';
+const API_BASE_URL = 'http://192.168.159.86:3001/api/auth';
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
