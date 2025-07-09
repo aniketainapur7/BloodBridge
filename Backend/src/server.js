@@ -30,6 +30,9 @@ app.use("/api" ,bloodrequest);
 const blooddonors = require("./routes/blooddonor.route.js");
 app.use("/api/blood", blooddonors);
 
+const donorresponse = require("./routes/donor.route.js");
+app.use("/api",donorresponse);
+
 const port = process.env.PORT
 app.listen(port,'0.0.0.0', ()=>{
     console.log(`server is running on port ${port}`);

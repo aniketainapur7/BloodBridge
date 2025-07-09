@@ -1,4 +1,4 @@
-const BloodRequest = require("../models/bloodRequest.model");
+const BloodRequest = require("../models/blood-request.model");
 const User = require("../models/user.model"); 
 
 const donorRespondController = async (req, res) => {
