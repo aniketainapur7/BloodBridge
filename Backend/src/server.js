@@ -4,7 +4,13 @@ const cors = require("cors");
 const express = require("express");
 const app = express();
 app.use(express.json());
-app.use(cors());
+app.use(cors({
+  origin: '*', // or restrict to Expo dev server origin like 'http://localhost:19006'
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true
+}));
+
 const dbconnect  = require("./DB/db.js");
 dbconnect();
 app.use(cookie());
@@ -31,7 +37,7 @@ const blooddonors = require("./routes/blooddonor.route.js");
 app.use("/api/blood", blooddonors);
 
 const port = process.env.PORT
-app.listen(port, ()=>{
+app.listen(port,'0.0.0.0', ()=>{
     console.log(`server is running on port ${port}`);
 })
 

@@ -38,11 +38,7 @@ const donorMatchController = async (req, res) => {
     }
   }
 ]);
-
-    // console.log(donors);
     
-
-   
     const result = donors.map(d => ({
       donorProfile: {
         _id: d._id,

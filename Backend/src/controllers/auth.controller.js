@@ -56,35 +56,39 @@ const signup = async(req,res)=>{
 
 }
 
-const login = async(req,res)=>{
-    const {email , password} = req.body;
-    if(!email || !password){
-        return res.status(400).json({message : "all feilds aee required"});
+const login = async (req, res) => {
+  const { email, password } = req.body;
+
+  if (!email || !password) {
+    return res.status(400).json({ message: "All fields are required" });
+  }
+
+  try {
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(400).json({ message: "Invalid credentials" });
     }
-    try {
-        const user = await User.findOne({email});
-        if(!user){
-            return res.status(400).json({message : "Invalid credantils"});
-        }
-        const ispasswordmatch  = await bcrypt.compare(password , user.password);
-        if(!ispasswordmatch){
-            return res.status(400).json({message : "Invalid credantils"});
-        }
-       
-           await generatejwt(user._id,res);
-            return res.status(200).json({
-                fullName  : user.fullName,
-                id : user._id,
-                email : user.email,
-                profilepic : user.profilepic
-            });
-  
-    } catch (error) {
-        console.log("error in login controller " , error.message);
-        res.status(500).json({message : "internal server error"});
+
+    const isPasswordMatch = await bcrypt.compare(password, user.password);
+    if (!isPasswordMatch) {
+      return res.status(400).json({ message: "Invalid credentials" });
     }
-    
-}
+
+    const token = await generatejwt(user._id);
+
+    return res.status(200).json({
+      token, 
+      fullName: user.fullName,
+      id: user._id,
+      email: user.email,
+      profilepic: user.profilepic,
+      role : user.role
+    });
+  } catch (error) {
+    console.log("Error in login controller:", error.message);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
 const logout = async(req,res)=>{
 try {   
     const options = {

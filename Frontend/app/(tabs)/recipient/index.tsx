@@ -10,9 +10,13 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons, MaterialCommunityIcons, AntDesign } from '@expo/vector-icons';
-import api from '../utils/api';
+import * as SecureStore from 'expo-secure-store';
+import axios from 'axios';
 
 const { width } = Dimensions.get('window');
+
+// ✅ Replace with your Mac IP used in login
+const API_BASE_URL = 'http://10.169.156.28:3001';
 
 export default function RecipientPage() {
   const router = useRouter();
@@ -24,7 +28,19 @@ export default function RecipientPage() {
   const fetchUserProfile = async () => {
     try {
       setLoadingProfile(true);
-      const res = await api.get('/auth/profile'); // Replace with your real backend endpoint
+
+      const token = await SecureStore.getItemAsync('jwt');
+      if (!token) {
+        console.error('No token found');
+        return;
+      }
+
+      const res = await axios.get(`${API_BASE_URL}/api/auth/profile`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
       setUserData(res.data);
     } catch (err) {
       console.error('Failed to load profile:', err);
