@@ -1,19 +1,19 @@
 const jwt = require('jsonwebtoken');
 const User = require("../models/user.model.js");
 
-const verifyjwt = async (req,res,next)=>{
-    try {
-    const token = req.cookies.jwt;
+const verifyjwt = async (req, res, next) => {
+  try {
+    const authHeader = req.headers.authorization;
 
-    if (!token) {
+    // Check if Authorization header exists and starts with Bearer
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
       return res.status(401).json({ message: "Unauthorized - No Token Provided" });
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_TOKEN_SECERT);
+    // Extract token from "Bearer <token>"
+    const token = authHeader.split(" ")[1];
 
-    if (!decoded) {
-      return res.status(401).json({ message: "Unauthorized - Invalid Token" });
-    }
+    const decoded = jwt.verify(token, process.env.JWT_TOKEN_SECERT);
 
     const user = await User.findById(decoded.userid).select("-password");
 
@@ -21,13 +21,14 @@ const verifyjwt = async (req,res,next)=>{
       return res.status(404).json({ message: "User not found" });
     }
 
+    // Attach user to request
     req.user = user;
 
     next();
   } catch (error) {
-    console.log("Error in protectRoute middleware: ", error.message);
-    res.status(500).json({ message: "Internal server error" });
+    console.log("Error in verifyjwt middleware:", error.message);
+    res.status(401).json({ message: "Invalid or expired token" });
   }
-}
+};
 
-module.exports  = verifyjwt;
+module.exports = verifyjwt;
