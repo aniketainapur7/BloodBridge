@@ -18,6 +18,10 @@ const userSchema = new mongoose.Schema({
     type: String,
     enum: ["AP", "AN", "BP", "BN", "ABP", "ABN", "OP", "ON"],
   },
+  phonenumber : {
+    type : String ,
+    required : true 
+  },
   role: {
     type: String,
     enum: ["donor", "recipient"],
