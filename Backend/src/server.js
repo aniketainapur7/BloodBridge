@@ -10,6 +10,15 @@ dbconnect();
 app.use(cookie());
 app.use(express.urlencoded({ extended: true }));
 
+
+//middle ware to maintain log in console
+
+app.use((req, res, next) => {
+  const time = new Date().toLocaleString(); // Current local time
+  console.log(`[${time}] ${req.method} ${req.originalUrl}`);
+  next();
+});
+
 const authroute = require("./routes/auth.route.js");
 app.use("/api/auth",authroute);
 
