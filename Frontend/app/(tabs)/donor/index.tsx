@@ -6,21 +6,56 @@ import {
   TouchableOpacity,
   Modal,
   Dimensions,
+  ActivityIndicator,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons, MaterialCommunityIcons, AntDesign } from '@expo/vector-icons';
+import * as SecureStore from 'expo-secure-store';
+import axios from 'axios';
 
 const { width } = Dimensions.get('window');
+const API_BASE_URL = 'http://10.169.156.28:3001';
 
 export default function DonorPage() {
   const router = useRouter();
   const [profileVisible, setProfileVisible] = useState(false);
   const [chatVisible, setChatVisible] = useState(false);
+  const [userData, setUserData] = useState<any>(null);
+  const [loadingProfile, setLoadingProfile] = useState(false);
+
+  const fetchUserProfile = async () => {
+    try {
+      setLoadingProfile(true);
+
+      const token = await SecureStore.getItemAsync('jwt');
+      if (!token) {
+        console.error('No token found');
+        return;
+      }
+
+      const res = await axios.get(`${API_BASE_URL}/api/auth/profile`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      setUserData(res.data);
+    } catch (err) {
+      console.error('Failed to load profile:', err);
+    } finally {
+      setLoadingProfile(false);
+    }
+  };
+
+  const openProfile = () => {
+    setProfileVisible(true);
+    fetchUserProfile();
+  };
 
   return (
     <View style={styles.container}>
       {/* Profile Icon */}
-      <TouchableOpacity style={styles.profileIcon} onPress={() => setProfileVisible(true)}>
+      <TouchableOpacity style={styles.profileIcon} onPress={openProfile}>
         <Ionicons name="person-circle-outline" size={32} color="#333" />
       </TouchableOpacity>
 
@@ -57,9 +92,28 @@ export default function DonorPage() {
               <AntDesign name="arrowleft" size={24} color="#333" />
             </TouchableOpacity>
             <Text style={styles.popupTitle}>Profile</Text>
-            <Text>Name: Jane Smith</Text>
-            <Text>Blood Group: O-</Text>
-            <Text>Email: janesmith@example.com</Text>
+            <View style={styles.profileContent}>
+              {loadingProfile ? (
+                <ActivityIndicator size="small" />
+              ) : userData ? (
+                <>
+                  <Text style={styles.label}>
+                    <Text style={styles.bold}>Name:</Text> {userData.fullName}
+                  </Text>
+                  <Text style={styles.label}>
+                    <Text style={styles.bold}>Email:</Text> {userData.email}
+                  </Text>
+                  <Text style={styles.label}>
+                    <Text style={styles.bold}>Blood Group:</Text> {userData.bloodType}
+                  </Text>
+                  <Text style={styles.label}>
+                    <Text style={styles.bold}>Role:</Text> {userData.role}
+                  </Text>
+                </>
+              ) : (
+                <Text>Could not fetch profile.</Text>
+              )}
+            </View>
           </View>
         </View>
       </Modal>
@@ -149,5 +203,16 @@ const styles = StyleSheet.create({
     top: 14,
     left: 14,
     zIndex: 10,
+  },
+  profileContent: {
+    marginTop: 20,
+    gap: 10,
+  },
+  label: {
+    fontSize: 15,
+    color: '#333',
+  },
+  bold: {
+    fontWeight: 'bold',
   },
 });
