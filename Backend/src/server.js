@@ -1,9 +1,10 @@
 require("dotenv").config();
 const cookie = require("cookie-parser");
+const cors = require("cors");
 const express = require("express");
 const app = express();
 app.use(express.json());
-
+app.use(cors());
 const dbconnect  = require("./DB/db.js");
 dbconnect();
 app.use(cookie());
@@ -24,3 +25,4 @@ const port = process.env.PORT
 app.listen(port, ()=>{
     console.log(`server is running on port ${port}`);
 })
+
