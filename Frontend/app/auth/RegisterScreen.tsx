@@ -4,18 +4,19 @@ import { Picker } from '@react-native-picker/picker';
 import * as Location from 'expo-location';
 import axios from 'axios';
 
-// ✅ Replace with your machine's actual IP (not localhost if on a physical phone)
-const API_BASE_URL = 'http://localhost:3001/api/auth'; // Replace with your IP
+const API_BASE_URL = 'http://localhost:3001/api/auth'; // Update with your IP
 
 export default function RegisterLoginScreen() {
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
+  const [bloodGroup, setBloodGroup] = useState('');
   const [role, setRole] = useState('');
   const [mode, setMode] = useState<'login' | 'register'>('register');
 
   const handleSubmit = async () => {
-    if (!email || !password || (mode === 'register' && (!fullName || !role || role === ''))) {
+    if (!email || !password || (mode === 'register' && (!fullName || !role || !phone || !bloodGroup))) {
       Alert.alert('Error', 'Please fill all required fields.');
       return;
     }
@@ -40,7 +41,16 @@ export default function RegisterLoginScreen() {
 
       const payload =
         mode === 'register'
-          ? { fullName, email, password, role, latitude, longitude }
+          ? {
+              fullName,
+              email,
+              phone,
+              password,
+              bloodType: bloodGroup,
+              role,
+              latitude,
+              longitude
+            }
           : { email, password };
 
       const response = await axios.post(endpoint, payload, {
@@ -50,9 +60,9 @@ export default function RegisterLoginScreen() {
       const data = response.data;
 
       if (mode === 'register') {
-        Alert.alert('Registration Successful', `Welcome, ${data.fullName}!`);
+        Alert.alert('Registration Successful', ` Welcome, ${data.fullName}! `);
       } else {
-        Alert.alert('Login Successful', `Welcome back, ${data.fullName}!`);
+        Alert.alert('Login Successful', ` Welcome back, ${data.fullName}! `);
       }
 
       console.log('User profile:', data);
@@ -75,6 +85,27 @@ export default function RegisterLoginScreen() {
             value={fullName}
             onChangeText={setFullName}
           />
+
+          <TextInput
+            placeholder="Phone Number"
+            style={styles.input}
+            value={phone}
+            keyboardType="phone-pad"
+            onChangeText={setPhone}
+          />
+
+          <Picker selectedValue={bloodGroup} onValueChange={(val) => setBloodGroup(val)} style={styles.input}>
+            <Picker.Item label="Select Blood Group" value="" />
+            <Picker.Item label="A+" value="AP" />
+            <Picker.Item label="A−" value="AN" />
+            <Picker.Item label="B+" value="BP" />
+            <Picker.Item label="B−" value="BN" />
+            <Picker.Item label="AB+" value="ABP" />
+            <Picker.Item label="AB−" value="ABN" />
+            <Picker.Item label="O+" value="OP" />
+            <Picker.Item label="O−" value="ON" />
+          </Picker>
+
           <Picker selectedValue={role} onValueChange={(val) => setRole(val)} style={styles.input}>
             <Picker.Item label="Select Role" value="" />
             <Picker.Item label="Donor" value="donor" />
